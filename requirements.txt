@@ -1,4 +1,4 @@
-imdb
+IMDb
 requests
 pandas
 tqdm
