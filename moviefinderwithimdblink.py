@@ -1,98 +1,93 @@
-import streamlit as st
-from imdb import IMDb
 import requests
-import pandas as pd
-from tqdm import tqdm  # Import tqdm for progress bar
+from bs4 import BeautifulSoup
 
-# Streamlit App Title
-st.title("Movie Search App")
+# List of URLs
+urls = [
+    "https://hdtoday.tv/movie/watch-the-engineer-hd-99454",
+    # Add more URLs here
+]
 
-# Sidebar
-st.sidebar.header("Movie Details")
-uploaded_file = st.sidebar.file_uploader("Upload a CSV file with movie details", type=["csv"])
+# Specify the target class names
+target_classes_col5 = [
+    "heading-name",
+    "btn btn-sm btn-radius btn-warning btn-imdb",
+    "description",
+    "col-xl-5 col-lg-6 col-md-8 col-sm-12",
+]
 
-# Function to search for a movie and get IMDb ID
-def search_movie_imdb(movie_name, release_year):
-    ia = IMDb()
-    movies = ia.search_movie(movie_name)
+target_classes_col6 = [
+    "col-xl-6 col-lg-6 col-md-4 col-sm-12",
+]
 
-    # Filter movies by release year
-    filtered_movies = [movie for movie in movies if "year" in movie and movie["year"] == release_year]
+# Create an HTML file to save the output
+with open("hdtoday.html", "w", encoding="utf-8") as html_file:
+    html_file.write("<html><head><style>")
+    html_file.write("table { border-collapse: collapse; width: 100%; }")
+    html_file.write("td { padding: 10px; border: 1px solid #ddd; }")
+    html_file.write(".col5 { background-color: #f2f2f2; }")
+    html_file.write(".col6 { background-color: #e0e0e0; }")
+    html_file.write("</style></head><body>")
 
-    if filtered_movies:
-        movie = filtered_movies[0]  # Get the first matching movie
-        imdb_id = movie.getID()
-        return imdb_id
-    else:
-        return None
+    # Loop through each URL
+    for url in urls:
+        # Send an HTTP GET request to the URL
+        response = requests.get(url)
 
-# Function to search for a movie and get TMDb ID
-def search_movie_tmdb(movie_name, release_year):
-    tmdb_api_key = "b0abe1120c53c9731ee3d32b81dd7df5"
-    base_url = "https://api.themoviedb.org/3/search/movie"
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the HTML content using BeautifulSoup
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-    params = {
-        "api_key": tmdb_api_key,
-        "query": movie_name,
-        "year": release_year
-    }
+            # Write the URL as a header
+            html_file.write(f"<h1>URL: {url}</h1>")
 
-    response = requests.get(base_url, params=params)
+            # Create a table for col-xl-5 content
+            html_file.write("<table>")
+            html_file.write("<colgroup><col class='col5'><col class='col5'></colgroup>")
+            for class_name in target_classes_col5:
+                div_tags = soup.find_all('div', class_=class_name)
+                h2_tags = soup.find_all('h2', class_=class_name)
+                button_tags = soup.find_all('button', class_=class_name)
 
-    if response.status_code == 200:
-        data = response.json()
-        if data.get("results"):
-            tmdb_id = data["results"][0]["id"]
-            return tmdb_id
-    return None
+                for tag in div_tags + h2_tags + button_tags:
+                    tag_content = tag.get_text(strip=True)
+                    if class_name == "heading-name":
+                        class_name = "Movie Name"
+                    elif class_name == "btn btn-sm btn-radius btn-warning btn-imdb":
+                        class_name = "IMDB Rating"
+                    elif class_name == "description":
+                        class_name = "Movie Short Story"
+                    html_file.write("<tr>")
+                    html_file.write(f"<td class='col5'><strong>{class_name}</strong></td>")
+                    html_file.write(f"<td class='col5'>{tag_content}</td>")
+                    html_file.write("</tr>")
+            html_file.write("</table>")
 
-# Main content
-if uploaded_file is not None:
-    movie_data = pd.read_csv(uploaded_file)
+            col6_div = soup.find('div', class_='col-xl-6 col-lg-6 col-md-4 col-sm-12')
+            if col6_div:
+                # Create a table for col-xl-6 content
+                html_file.write("<table>")
+                html_file.write("<colgroup><col class='col6'><col class='col6'></colgroup>")
+                row_lines = col6_div.find_all('div', class_='row-line')
 
-    results = []
+                for row_line in row_lines:
+                    type_element = row_line.find('span', class_='type')
+                    strong_text = type_element.find('strong').text.strip()
+                    if strong_text == "Released:":
+                        strong_text = "Released"
+                    content = row_line.get_text(strip=True).replace(strong_text, '', 1)
+                    html_file.write("<tr>")
+                    html_file.write(f"<td class='col6'><strong>{strong_text}</strong></td>")
+                    html_file.write(f"<td class='col6'>{content}</td>")
+                    html_file.write("</tr>")
+                html_file.write("</table>")
+            else:
+                html_file.write("<p>Class 'col-xl-6 col-lg-6 col-md-4 col-sm-12' not found.</p>")
 
-    # Use tqdm to create a progress bar
-    progress_bar = st.progress(0)  # Initialize progress bar
-    with tqdm(total=len(movie_data)) as pbar:
-        for index, row in movie_data.iterrows():
-            movie_name = row['Movie Name']
-            release_year = row['Release Year']
+            html_file.write("<br>")
+        else:
+            html_file.write(f"<p>Failed to retrieve the webpage at URL: {url}</p>")
 
-            imdb_id = search_movie_imdb(movie_name, release_year)
-            tmdb_id = search_movie_tmdb(movie_name, release_year)
+    html_file.write("</body></html>")
 
-            results.append({
-                'Movie Name': movie_name,
-                'Release Year': release_year,
-                'IMDb ID': imdb_id,
-                'TMDb ID': tmdb_id
-            })
-
-            # Update the progress bar
-            pbar.update(1)
-
-            # Update the progress message in Streamlit
-            st.text(f"Processed: {index + 1}/{len(movie_data)}")
-
-    progress_bar.empty()  # Remove progress bar after completion
-
-    results_df = pd.DataFrame(results)
-
-    st.subheader("Search Results")
-    st.write(results_df)
-
-    results_df.to_html("movie_search_results.html", index=False)
-    results_df.to_excel("movie_search_results.xlsx", index=False)
-
-    st.success("Search results saved to 'movie_search_results.html' and 'movie_search_results.xlsx'")
-
-# Instructions
-st.sidebar.header("Instructions")
-st.sidebar.markdown(
-    """
-    1. Upload a CSV file with movie details containing columns 'Movie Name' and 'Release Year' in the sidebar.
-    2. Click the 'Search' button to initiate the search.
-    3. The app will display the search results and save them to HTML and Excel files.
-    """
-)
+print("Data saved to 'hdtoday.html'")
