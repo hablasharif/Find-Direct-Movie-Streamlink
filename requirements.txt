@@ -1,0 +1,7 @@
+imdb
+requests
+pandas
+tqdm
+lxml
+openxxl
+pyperclip
