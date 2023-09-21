@@ -2,3 +2,4 @@ IMDbPY
 requests
 pandas
 tqdm
+openpyxl
