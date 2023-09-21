@@ -2,6 +2,3 @@ IMDbPY
 requests
 pandas
 tqdm
-lxml
-openxxl
-pyperclip
