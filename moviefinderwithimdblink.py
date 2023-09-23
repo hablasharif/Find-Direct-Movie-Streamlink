@@ -58,7 +58,7 @@ def generate_vidsrc_url(imdb_url=None, tmdb_id=None):
     else:
         return None
 
-# Function to get the movie title from a vidsrc URL
+# Function to get the title from a vidsrc URL
 def get_vidsrc_title(vidsrc_url):
     if vidsrc_url:
         response = requests.get(vidsrc_url)
@@ -66,7 +66,7 @@ def get_vidsrc_title(vidsrc_url):
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
             if title_tag:
-                return title_tag.text.strip()
+                return title_tag.text.strip().split('|')[0].strip()
     return None
 
 # Main content
