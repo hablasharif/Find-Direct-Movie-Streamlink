@@ -3,6 +3,7 @@ from imdb import IMDb
 import requests
 import pandas as pd
 from tqdm import tqdm  # Import tqdm for the progress bar
+from bs4 import BeautifulSoup
 
 # Streamlit App Title
 st.title("Movie Search App")
@@ -55,6 +56,17 @@ def generate_vidsrc_url(imdb_id=None, tmdb_id=None):
     else:
         return None
 
+# Function to get the movie title from a vidsrc URL
+def get_vidsrc_title(vidsrc_url):
+    if vidsrc_url:
+        response = requests.get(vidsrc_url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            title_tag = soup.find('title')
+            if title_tag:
+                return title_tag.text.strip()
+    return None
+
 # Function to generate IMDb hyperlink
 def generate_imdb_hyperlink(imdb_id):
     if imdb_id:
@@ -80,13 +92,16 @@ if uploaded_file is not None:
             
             vidsrc_url = generate_vidsrc_url(imdb_id, tmdb_id)
             imdb_hyperlink = generate_imdb_hyperlink(imdb_id)
+            
+            vidsrc_title = get_vidsrc_title(vidsrc_url)
 
             results.append({
                 'Movie Name': movie_name,
                 'Release Year': release_year,
                 'IMDb': imdb_hyperlink,
                 'TMDb ID': tmdb_id,
-                'vidsrc': vidsrc_url
+                'vidsrc': vidsrc_url,
+                'vidsrc_title': vidsrc_title  # Add the vidsrc title to the results
             })
 
             # Update the progress bar
