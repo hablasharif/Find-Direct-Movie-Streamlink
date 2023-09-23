@@ -12,7 +12,7 @@ st.title("Movie Search App")
 st.sidebar.header("Movie Details")
 uploaded_file = st.sidebar.file_uploader("Upload a CSV file with movie details", type=["csv"])
 
-# Function to search for a movie and get IMDb ID
+# Function to search for a movie and get IMDb URL
 def search_movie_imdb(movie_name, release_year):
     ia = IMDb()
     movies = ia.search_movie(movie_name)
@@ -23,7 +23,8 @@ def search_movie_imdb(movie_name, release_year):
     if filtered_movies:
         movie = filtered_movies[0]  # Get the first matching movie
         imdb_id = movie.getID()
-        return imdb_id
+        imdb_url = f"https://www.imdb.com/title/tt{imdb_id}"
+        return imdb_url
     else:
         return None
 
@@ -67,13 +68,6 @@ def get_vidsrc_title(vidsrc_url):
                 return title_tag.text.strip()
     return None
 
-# Function to generate IMDb hyperlink
-def generate_imdb_hyperlink(imdb_id):
-    if imdb_id:
-        return f"[https://www.imdb.com/title/tt{imdb_id}](https://www.imdb.com/title/tt{imdb_id})"
-    else:
-        return None
-
 # Main content
 if uploaded_file is not None:
     movie_data = pd.read_csv(uploaded_file)
@@ -87,11 +81,11 @@ if uploaded_file is not None:
             movie_name = row['Movie Name']
             release_year = row['Release Year']
 
-            imdb_id = search_movie_imdb(movie_name, release_year)
+            imdb_url = search_movie_imdb(movie_name, release_year)
             tmdb_id = search_movie_tmdb(movie_name, release_year)
             
             vidsrc_url = generate_vidsrc_url(imdb_id, tmdb_id)
-            imdb_hyperlink = generate_imdb_hyperlink(imdb_id)
+            imdb_hyperlink = imdb_url
             
             vidsrc_title = get_vidsrc_title(vidsrc_url)
 
