@@ -12,7 +12,7 @@ st.title("Movie Search App")
 st.sidebar.header("Movie Details")
 uploaded_file = st.sidebar.file_uploader("Upload a CSV file with movie details", type=["csv"])
 
-# Function to search for a movie and get IMDb URL
+# Function to search for a movie and get IMDb ID
 def search_movie_imdb(movie_name, release_year):
     ia = IMDb()
     movies = ia.search_movie(movie_name)
@@ -23,8 +23,7 @@ def search_movie_imdb(movie_name, release_year):
     if filtered_movies:
         movie = filtered_movies[0]  # Get the first matching movie
         imdb_id = movie.getID()
-        imdb_url = f"https://www.imdb.com/title/tt{imdb_id}"
-        return imdb_url
+        return imdb_id
     else:
         return None
 
@@ -49,16 +48,15 @@ def search_movie_tmdb(movie_name, release_year):
     return None
 
 # Function to generate vidsrc URL with "tt" prefix
-def generate_vidsrc_url(imdb_url=None, tmdb_id=None):
-    if imdb_url:
-        imdb_id = imdb_url.split("/")[-1]  # Extract IMDb ID from IMDb URL
+def generate_vidsrc_url(imdb_id=None, tmdb_id=None):
+    if imdb_id:
         return f"https://vidsrc.to/embed/movie/tt{imdb_id}"
     elif tmdb_id:
         return f"https://vidsrc.to/embed/movie/{tmdb_id}"
     else:
         return None
 
-# Function to get the title from a vidsrc URL
+# Function to get the movie title from a vidsrc URL
 def get_vidsrc_title(vidsrc_url):
     if vidsrc_url:
         response = requests.get(vidsrc_url)
@@ -66,8 +64,15 @@ def get_vidsrc_title(vidsrc_url):
             soup = BeautifulSoup(response.content, 'html.parser')
             title_tag = soup.find('title')
             if title_tag:
-                return title_tag.text.strip().split('|')[0].strip()
+                return title_tag.text.strip()
     return None
+
+# Function to generate IMDb hyperlink
+def generate_imdb_hyperlink(imdb_id):
+    if imdb_id:
+        return f"[https://www.imdb.com/title/tt{imdb_id}](https://www.imdb.com/title/tt{imdb_id})"
+    else:
+        return None
 
 # Main content
 if uploaded_file is not None:
@@ -82,11 +87,11 @@ if uploaded_file is not None:
             movie_name = row['Movie Name']
             release_year = row['Release Year']
 
-            imdb_url = search_movie_imdb(movie_name, release_year)
+            imdb_id = search_movie_imdb(movie_name, release_year)
             tmdb_id = search_movie_tmdb(movie_name, release_year)
             
-            vidsrc_url = generate_vidsrc_url(imdb_url, tmdb_id)
-            imdb_hyperlink = imdb_url
+            vidsrc_url = generate_vidsrc_url(imdb_id, tmdb_id)
+            imdb_hyperlink = generate_imdb_hyperlink(imdb_id)
             
             vidsrc_title = get_vidsrc_title(vidsrc_url)
 
