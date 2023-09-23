@@ -49,8 +49,9 @@ def search_movie_tmdb(movie_name, release_year):
     return None
 
 # Function to generate vidsrc URL with "tt" prefix
-def generate_vidsrc_url(imdb_id=None, tmdb_id=None):
-    if imdb_id:
+def generate_vidsrc_url(imdb_url=None, tmdb_id=None):
+    if imdb_url:
+        imdb_id = imdb_url.split("/")[-1]  # Extract IMDb ID from IMDb URL
         return f"https://vidsrc.to/embed/movie/tt{imdb_id}"
     elif tmdb_id:
         return f"https://vidsrc.to/embed/movie/{tmdb_id}"
@@ -84,7 +85,7 @@ if uploaded_file is not None:
             imdb_url = search_movie_imdb(movie_name, release_year)
             tmdb_id = search_movie_tmdb(movie_name, release_year)
             
-            vidsrc_url = generate_vidsrc_url(imdb_id, tmdb_id)
+            vidsrc_url = generate_vidsrc_url(imdb_url, tmdb_id)
             imdb_hyperlink = imdb_url
             
             vidsrc_title = get_vidsrc_title(vidsrc_url)
