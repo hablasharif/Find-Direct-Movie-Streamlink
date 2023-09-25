@@ -5,6 +5,14 @@ import pandas as pd
 from tqdm import tqdm  # Import tqdm for the progress bar
 from bs4 import BeautifulSoup
 
+
+# Create a link to the external URL
+url = "https://danga-sitemap-finderpy.streamlit.app/"
+link_text = "visit this for find multiple website sitemap with robot txt"
+
+# Display the link
+st.markdown(f"[{link_text}]({url})")
+
 # Streamlit App Title
 st.title("Movie Search App")
 
